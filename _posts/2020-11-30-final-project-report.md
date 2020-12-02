@@ -98,3 +98,47 @@ We also consider the sequence tagging task of identifying the named entities lik
 model names from the given scientific paper. We are currently applying this framework to extract the trigger phrases 
 corresponding to each entity type.
 
+# Experiments
+
+We evaluated the classifiers \emph{SciBERT-v1} and \emph{SciBERT-v2} on the paper reproducibility classification dataset. 
+As the total number of samples in this dataset is relatively small (i.e., 886 samples), we perform 5-fold cross validation 
+and report the mean of the performance metric to give a better estimate of the model's performance.The results can be 
+found in Table \ref{tab:lm_model_results}. Results show that the \emph{SciBERT-v2} model performs significantly better 
+than the \emph{SciBERT-v1} model even though its using only the important claim as input to the model.
+
+|    Model   | Accuracy | Precision | Recall | F1-score |
+|:----------:|:--------:|:---------:|:------:|:--------:|
+| SciBERT-v1 |   66.59  |   0.644   |  0.611 |   0.612  |
+| SciBERT-v2 |   90.85  |   0.869   |  0.934 |   0.900  |
+
+Then, we evaluate the extracted trigger phrases corresponding to each of the label categories (i.e., reproducible vs 
+non-reproducible) by manually examining them. We gave the list of extracted phrases corresponding to reproducible and 
+non-reproducible papers to the domain experts and asked them to evaluate if those phrases make sense intuitively. Some 
+of the extracted trigger phrases are shown in the Table \ref{tab:lm_phrases}.
+
+We observed some interesting patterns in the trigger phrases extracted by our framework. The model is able to identify 
+the phrases which contain terms like statistical tests having high significance, p-values less than a specific range 
+(i.e., p < 0.001) for reproducible papers. For non-reproducible papers, it identifies phrases that contain terms like 
+having a difference in test results, incompatibility in experiments and p-values above a specific range (i.e., p > 0.5) etc.
+
+To measure if the p-values play a important role in deciding the reproducibility of the papers, we further analysed the 
+distribution of p-values that are extracted from only the most important phrase identified by our framework for each paper 
+and found a clear separation in p-values between the reproducible vs non-reproducible papers as shown in the Figure 
+\ref{fig:pv_dist}. This observation indicates our phrase extraction framework could also provide additional capability 
+to explain the deep learning models prediction.
+
+# References
+
+[1] Bill Yuchen Lin, Dong-Ho Lee, Frank F. Xu, Ouyu Lan, and Xiang Ren. 2019. AlpacaTag: An active learning-based crowd annotation framework for sequence tagging. In Proceedings of the 57th Annual
+Meeting of the Association for Computational Linguistics: System Demonstrations, pages 58–63, Florence, Italy. Association for Computational Linguistics.
+
+[2] Xisen Jin, Zhongyu Wei, Junyi Du, Xiangyang Xue, & Xiang Ren. (2020). Towards Hierarchical Importance Attribution: Explaining Compositional Semantics for Neural Sequence Models.
+
+[3] Marco Tulio Ribeiro and Sameer Singh and Carlos Guestrin (2016). "Why Should I Trust You?": Explaining the Predictions of Any Classifier. In Proceedings of the 22nd ACM SIGKDD International Conference on Knowledge Discovery and Data Mining, San Francisco, CA, USA, August 13-17, 2016 (pp. 1135–1144).
+
+[4] Iz Beltagy, Kyle Lo, & Arman Cohan. (2019). SciBERT: A Pretrained Language Model for Scientific Text.
+
+
+
+
+
