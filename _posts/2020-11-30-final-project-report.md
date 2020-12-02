@@ -110,7 +110,10 @@ difference in prediction logit score to be the importance score for that phrase 
 class **c**. For measuring the prediction logit score difference, we need to train another SciBERT model (we refer to this 
 model as *SciBERT-v2*) with only the important claim as input and aim to predict whether the paper corresponding to 
 this important claim is reproducible or not. For sampling, we train a LSTM based language model on the SciBERT tokenized 
-text of the training corpus. The relationship between the two SciBERT classifier models are illustrated in the below figure,
+text of the training corpus. We also repeated this experiment by using the entire paper content as input by first 
+identifying the important segment of the paper using *SciBERT-v1* model and extracting the important phrases from that 
+identified segment using the *SciBERT-V2* model and SOC algorithm.
+The relationship between the two SciBERT classifier models are illustrated in the below figure,
 
 ![_config.yml]({{ site.baseurl }}/images/lm_models_both.png)
 
@@ -144,17 +147,17 @@ and Sampling and Occlusion algorithm to extract evidential phrases from the inpu
 
 # Experiments
 
-We evaluated the classifiers *SciBERT-v1* and *SciBERT-v2* on the paper reproducibility classification dataset. 
-As the total number of samples in this dataset is relatively small (i.e., 886 samples), we perform 5-fold cross validation 
-and report the mean of the performance metric to give a better estimate of the model's performance. The results can be 
-found in below table,
+We evaluated the classifiers *SciBERT-v1* and *SciBERT-v2* on the paper reproducibility classification dataset using either 
+only claims as input (or) entire paper content as input. As the total number of samples in this dataset is relatively small
+(i.e., 886 samples), we perform 5-fold cross validation and report the mean of the performance metric to give a better 
+estimate of the model's performance. The results can be found in below tables,
 
 ![_config.yml]({{ site.baseurl }}/images/results_tc_claim_level.png)
 
 ![_config.yml]({{ site.baseurl }}/images/results_tc_paper_level.png)
 
 Results show that the *SciBERT-v2* model performs significantly better 
-than the *SciBERT-v1* model even though its using only the important claim as input to the model.
+than the *SciBERT-v1* model even though its using only the part of the input (i.e., important part of the input).
 
 Then, we evaluate the extracted trigger phrases corresponding to each of the label categories (i.e., reproducible vs 
 non-reproducible) by manually examining them. We gave the list of extracted phrases corresponding to reproducible and 
