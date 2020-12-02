@@ -6,9 +6,9 @@ title: Trigger phrase mining to provide additional supervision to low resource N
 # Introduction
 
 Named Entity Recognition is a fundamental information extraction task that focuses on extracting entities from a given 
-text and classifying them using predefined categories (e.g., Locations, persons etc). Recent advances in NER have focused 
-on training neural network models with abundance of labeled data. However, collecting human annotations for NER is very 
-expensive and time-consuming especially for new domains like biomedical or scientific literature. Thus, a crucial research
+text and classifying them to predefined categories (e.g., Locations, persons etc). Recent advances in NER have focused 
+on training neural network models with abundance of labeled data. However, collecting human annotations for NER task is very 
+expensive and time-consuming especially in new domains like biomedical or scientific literature. Thus, a crucial research
 question is how to obtain human supervision in an cost-effective way. 
 
 Text classification is a fundamental NLP problem of assigning a category to the given piece of text such as sentiment 
@@ -16,9 +16,13 @@ classification, news classification etc. Though this problem is well explored, a
 requires huge amounts of labeled data to achieve impressive performance. However, collecting labeled data for certain tasks
 in low-resource domains are expensive and highly time consuming. 
 
-Thus, we need a way to provide additional supervision to deep learning models for solving NLP tasks like text classification
-and sequence tagging when the amount of labeled data is limited and are very expensive to annotate. The high-level overview of
-our approach is illustrated in the below figure, 
+Deep learning models are also used as a black box models and cannot provide evidence for its prediction on its own. 
+Trigger phrases in the inputs give hints for prediction of particular category (or) identifying a particular entity type. 
+Thus, we need a way to identify trigger phrases from the input that can help explain the prediction of a deep learning model 
+and also use those trigger phrases to provide additional supervision to deep learning models for solving low resource NLP tasks 
+like text classification and sequence tagging when the amount of labeled data is limited and are very expensive to annotate. 
+
+The high-level overview of our approach is illustrated in the below figure, 
 
 ![_config.yml]({{ site.baseurl }}/images/trigger_phrase_overview.png)
 
@@ -33,7 +37,7 @@ to first identify the important segment from the input and extract the evidentia
 segment of the input. Previous work on applying the Sampling and Occlusion algorithm (including the original paper) has focused
 only on short text classification tasks like sentiment classification and relation classification etc.
 
-* Proposing a framework to extract the trigger phrases which can explain the prediction of a deep learning model on sequence tagging tasks. 
+* Proposed a framework to extract the trigger phrases which can explain the prediction of a deep learning model on sequence tagging tasks. 
 Proposed a way to formulate the named entity recognition task as a entity span classification task and applied the Sampling and Occlusion
 algorithm to extract evidential phrases with respect to a particular entity span in the given input sentence. Previous work on providing 
 evidence to sequence tagging models such as using LIME algorithm has been focused only on the extraction of evidential word tokens and not phrases.
@@ -74,8 +78,8 @@ Output: Trigger dictionary **d** consisting of list of phrases **p** correspondi
 # Approach
 
 We now present a framework which can extract the trigger phrases corresponding to each of the label categories in case 
-of text classification task (or) extract the trigger phrases corresponding to each of the entity types in case of sequence
- tagging task. 
+of text classification task (or) extract the trigger phrases corresponding to each of the entity types in case of sequence 
+tagging task. 
 
 We consider the text classification task of predicting whether a given scientific paper is reproducible or not.  We have
 a labeled dataset of around 886 papers. Each paper is parsed using the AllenAI's Science Parse tool 
@@ -127,22 +131,22 @@ additional supervision to the existing deep learning models.
 
 We also consider the sequence tagging task of identifying the named entities like sample size, p-values, effect size, 
 model names etc from the given scientific paper. We train the *SciBERT-NER* model on a token level classification task of 
-classifying each of the word tokens into one of the entity tags such as B-TN, I-TN, O etc. The SciBERT model operates at
+classifying each of the word tokens into one of the named entity tags such as B-TN, I-TN, O etc. The SciBERT model operates at
 word-piece level and can produce the embeddings for each of the word pieces. So, for classifying each word token, we take
-the embedding of the first word-piece token of that word to be the embedding of the entire word token and classify it using 
-a linear layer followed by Softmax.
+the embedding of the first word-piece token of that word to be the embedding of that word token and classify it to one of the 
+named entity tags using a linear layer followed by a Softmax.
 
 In order to apply the Sampling and Occlusion algorithm directly to the named entity recognition task, we frame the NER task
-as entity span classification task by training the SciBERT model with input as \<sentence, entity\> and output as
-\<entity_label\>. We refer to this model as *SciBERT-NER-TC* model.  The *SciBERT-NER* and *SciBERT-NER-TC* model architectures are 
+as entity span classification task by training the SciBERT model with \<sentence, entity\> as input and 
+\<entity_label\> as output. We refer to this model as *SciBERT-NER-TC* model. The *SciBERT-NER* and *SciBERT-NER-TC* model architectures are 
 illustrated in the below figure,
 
 ![_config.yml]({{ site.baseurl }}/images/ner_models.png)
 
 Once we have these trained *SciBERT-NER* and *SciBERT-NER-TC* models, we can extract the trigger phrases corresponding to a
-particular entity during the test time. Given a input sentence, we first use the *SciBERT-NER* model to tag the entities on
-a token level. Then, we create a sample of the format <input sentence, extracted entity> and use the *SciBERT-NER-TC* model 
-and Sampling and Occlusion algorithm to extract evidential phrases from the input sentence part of this artificially created sample.
+particular entity during the test time. Given a input sentence, we first use the *SciBERT-NER* model to tag the entities in the input
+sentence on a token level. Then, we create a sample of the format \<input sentence, extracted entity\> and use the *SciBERT-NER-TC* model 
+and Sampling and Occlusion algorithm to extract evidential phrases from the input sentence which is part of this artificially created sample.
 
 
 # Experiments
@@ -157,7 +161,7 @@ estimate of the model's performance. The results can be found in below tables,
 ![_config.yml]({{ site.baseurl }}/images/results_tc_paper_level.png)
 
 Results show that the *SciBERT-v2* model performs significantly better 
-than the *SciBERT-v1* model even though its using only the part of the input (i.e., important part of the input).
+than the *SciBERT-v1* model even though it uses only the part of the input (i.e., important part of the input).
 
 Then, we evaluate the extracted trigger phrases corresponding to each of the label categories (i.e., reproducible vs 
 non-reproducible) by manually examining them. We gave the list of extracted phrases corresponding to reproducible and 
@@ -182,18 +186,20 @@ and found a clear separation in p-values between the reproducible vs non-reprodu
 This observation indicates our phrase extraction framework could also provide additional capability 
 to explain the deep learning models prediction. 
 
-We evaluated the SciBERT-NER model on the feature extraction task of identifying the named entities such as p-value, sample size,
-effect size from the input sentence. The results are summarized in the below table, 
+We evaluated the *SciBERT-NER* model on the feature extraction task of identifying the named entities such as p-value, sample size,
+effect size from the input sentence. The *SciBERT-NER* model achieved a macro F1 score of 0.8934. The results are summarized in the below table, 
 
 ![_config.yml]({{ site.baseurl }}/images/results_ner.png)
 
-As we can see from the results, the SciBERT-NER model is able to identify the entities such as model number, study number and p-values
+As we can see from the results, the *SciBERT-NER* model is able to identify the entities such as model number, study number and p-values
 with very high F1 score but not able to identify certain entities such as model name, sample size, sampling method etc.
 The entities having a F1 score below 0.90 and having a support of at least 20 occurrences are highlighted in red. These targeted 
 entities are explored further and we extracted trigger dictionaries corresponding to those entities so that we can use them 
-as additional supervision to improve the performance of the existing SciBERT-NER model.
+as additional supervision to improve the performance of the existing *SciBERT-NER* model. We also evaluated the *SciBERT-NER-TC* model
+on our artificially created task which is described earlier in Approach section and the model achieved a macro F1 score of 0.99
+in this artificially created task as this task is fairly easy.
 
-We evaluated the evidential trigger phrases extracted by the SciBERT-NER-TC model in the given input sentence with respect
+We evaluated the evidential trigger phrases extracted by the *SciBERT-NER-TC model* in the given input sentence with respect
 to the each of the targeted entities by manually examining them. The model is able to extract the phrases corresponding to
 the results of statistical tests, factors and estimates for the entity type "model name" and phrases corresponding to the 
 split of the samples, source of the samples for the entity type "sample size" and phrases corresponding to the samples itself
@@ -212,19 +218,22 @@ can easily be applied to other deep learning models on similar types of tasks. B
 the model’s prediction, we can find interesting patterns that could be nearly impossible to find otherwise. 
 
 Once these trigger phrases are refined by human experts, we could use them as a way to provide additional supervision to deep
-learning models for tasks that does not have enormous labeled data. 
+learning models for tasks that does not have enormous amounts of labeled data. 
 
-The results of trigger phrase extraction for sequence tagging task can be improved further by couple of refinements. One 
-potential improvement is to select the good candidate phrases around the entity spans and compute the importance scores of only
-those candidate phrases and pick the top-k phrases. Another improvement can be done by modifying the SOC algorithm to directly
+The results of trigger phrase extraction for sequence tagging task can be improved further by a couple of refinements. One 
+potential improvement could be to select the good candidate phrases around the entity spans and compute the importance scores of only
+those candidate phrases and pick the top-k phrases among them. Another improvement can be done by modifying the SOC algorithm to directly
 work on the sequence tagging task. 
 
-The Global trigger dictionary is currently build by just aggregating the trigger phrases corresponding to 
+The Global trigger phrase dictionary is currently build by just aggregating the trigger phrases corresponding to 
 the each of the samples in the dataset and use their local importance scores to rank the entire list of trigger phrases 
 and pick the top-k phrases for the trigger dictionary. This approach can be further improved by utilizing
-the inverse phrase frequency and importance scores normalized by lengths during the ranking stage. The inverse phrase frequency
+the inverse phrase frequency and also normalizing the importance scores of phrases by their lengths during the ranking stage. The inverse phrase frequency
 based method can help us to avoid picking the common phrases as important phrase and normalized importance score based method
 provides a fair way to compare the importance scores of phrases having different lengths. 
+
+**Note:** The github repository associated with this project is currently in private mode as this work is a part of the 
+INK research lab which is yet to be published.
 
 # References
 
