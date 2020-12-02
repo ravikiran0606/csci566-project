@@ -112,7 +112,7 @@ model as *SciBERT-v2*) with only the important claim as input and aim to predict
 this important claim is reproducible or not. For sampling, we train a LSTM based language model on the SciBERT tokenized 
 text of the training corpus. The relationship between the two SciBERT classifier models are illustrated in the below figure,
 
-![_config.yml]({{ site.baseurl }}/images/lm_models.png)
+![_config.yml]({{ site.baseurl }}/images/lm_models_both.png)
 
 Once we have the importance scores for all the candidate phrases for each of the label categories, we choose the top-3 
 phrases with highest importance scores to be the trigger phrases corresponding to that label category in the given sample. 
