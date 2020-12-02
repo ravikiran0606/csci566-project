@@ -17,7 +17,10 @@ requires huge amounts of labeled data to achieve impressive performance. However
 in low-resource domains are expensive and highly time consuming. 
 
 Thus, we need a way to provide additional supervision to deep learning models for solving NLP tasks like text classification
-and sequence tagging when the amount of labeled data is limited and are very expensive to annotate.
+and sequence tagging when the amount of labeled data is limited and are very expensive to annotate. The high-level overview of
+our approach is illustrated in the below figure, 
+
+![_config.yml]({{ site.baseurl }}/images/trigger_phrase_overview.png)
 
 # Problem Formulation
 
@@ -37,13 +40,17 @@ to whether that particular paper is reproducible or not. For the sequence taggin
 papers which are tagged with various entity types such as p-values, effect sizes, model names, study names etc using a 
 BIO encoding scheme.
 
-For the text classification task, \newline
-Input: Text classification dataset $D$ with a number of categories $C$. \newline
-Output: Trigger dictionary $d$ consisting of list of phrases $p$ corresponding to each the categories $C$. 
+For the text classification task, 
 
-For the sequence tagging task, \newline
-Input: Sequence tagging dataset $D$ with a number of entity types $E$. \newline
-Output: Trigger dictionary $d$ consisting of list of phrases $p$ corresponding to each the entity types $E$. 
+Input: Text classification dataset **D** with a number of categories **C**. 
+
+Output: Trigger dictionary **d** consisting of list of phrases **p** corresponding to each the categories **C**. 
+
+For the sequence tagging task, 
+
+Input: Sequence tagging dataset **D** with a number of entity types **E**. 
+
+Output: Trigger dictionary **d** consisting of list of phrases **p** corresponding to each the entity types **E**. 
 
 # Approach
 
@@ -53,38 +60,40 @@ of text classification task (or) extract the trigger phrases corresponding to ea
 
 We consider the text classification task of predicting whether a given scientific paper is reproducible or not.  We have
 a labeled dataset of around 886 papers. Each paper is parsed using the AllenAI's Science Parse tool 
-\footnote{\url{https://github.com/allenai/science-parse}} and converted from a pdf to a structured format which has a list 
+[https://github.com/allenai/science-parse](https://github.com/allenai/science-parse) and converted from a pdf to a structured format which has a list 
 of paper sections and its corresponding text. The labeled dataset also includes a list of 4 important claims that are extracted 
 from the paper by Human experts. We aim to extract the global patterns of trigger phrases corresponding to each of the 
 label categories (i.e., reproducible vs non-reproducible papers). 
 
 For extracting the trigger phrases in the scientific paper, we first identify the most important claim among the given 
 4 claims of the paper. For identifying the most important claim among the given 4 claims of the paper, we train a SciBERT
-[4] based text classification model (we refer to this model as \emph{SciBERT-v1}) that takes the given 4 claims as inputs
+[4] based text classification model (we refer to this model as *SciBERT-v1*) that takes the given 4 claims as inputs
 and predicts whether the paper corresponding to the given 4 claims is reproducible or not. The SciBERT based text 
 classification model uses SciBERT as a feature extractor followed by a  BiLSTM + Attention layer and a final linear layer 
-with Softmax which predicts the probability corresponding to each of the label categories. Once the \emph{SciBERT-v1} model 
+with Softmax which predicts the probability corresponding to each of the label categories. Once the *SciBERT-v1* model 
 is trained, we can use the attention weight corresponding to the claims as a measure of importance and pick the claim with 
 the highest attention weight as the most important claim.
-
-![_config.yml]({{ site.baseurl }}/images/LM_models.png)
 
 Then, we identify the list of candidate phrases from this identified claim to compute the importance scores with respect 
 to each of the label categories. For extracting the list of candidate phrases, we perform constituency parsing on the 
 identified claim and extract the phrases corresponding to the nodes of the parsed tree. We estimate the importance score 
 for each of the candidate phrases using the Sampling and Occlusion (SOC) algorithm [2]. This workflow is illustrated in 
-Figure \ref{fig:soc_flow}. In SOC algorithm, to estimate the importance of the phrase $p$ in the given input text $S$ 
-with label class $c$, we first sample the context around the phrase $p$ in the input text using a language model trained 
-on the training corpus. Then, we mask the phrase $p$ from the input text and measure the difference in the prediction logit 
-score of the label class $c$ of the input text $S$ without and with masking the phrase $p$ with a mask token. We perform 
-this procedure of sampling and measuring the prediction logit score difference for a number of trials and take the average 
-difference in prediction logit score to be the importance score for that phrase $p$ in the input text $S$ with label 
-class $c$. For measuring the prediction logit score difference, we need to train another SciBERT model (we refer to this 
-model as \emph{SciBERT-v2}) with only the important claim as input and aim to predict whether the paper corresponding to 
-this important claim is reproducible or not. For sampling, we train a LSTM based language model on the SciBERT tokenized 
-text of the training corpus. The relationship between the two SciBERT classifier models are illustrated in the Figure \ref{fig:lm_models}
+the below figure, 
 
 ![_config.yml]({{ site.baseurl }}/images/soc_flow.png)
+
+In SOC algorithm, to estimate the importance of the phrase **p** in the given input text **S** 
+with label class **c**, we first sample the context around the phrase **p** in the input text using a language model trained 
+on the training corpus. Then, we mask the phrase **p** from the input text and measure the difference in the prediction logit 
+score of the label class **c** of the input text **S** without and with masking the phrase **p** with a mask token. We perform 
+this procedure of sampling and measuring the prediction logit score difference for a number of trials and take the average 
+difference in prediction logit score to be the importance score for that phrase **p** in the input text **S** with label 
+class **c**. For measuring the prediction logit score difference, we need to train another SciBERT model (we refer to this 
+model as *SciBERT-v2*) with only the important claim as input and aim to predict whether the paper corresponding to 
+this important claim is reproducible or not. For sampling, we train a LSTM based language model on the SciBERT tokenized 
+text of the training corpus. The relationship between the two SciBERT classifier models are illustrated in the below figure,
+
+![_config.yml]({{ site.baseurl }}/images/lm_models.png)
 
 Once we have the importance scores for all the candidate phrases for each of the label categories, we choose the top-3 
 phrases with highest importance scores to be the trigger phrases corresponding to that label category in the given sample. 
@@ -100,21 +109,26 @@ corresponding to each entity type.
 
 # Experiments
 
-We evaluated the classifiers \emph{SciBERT-v1} and \emph{SciBERT-v2} on the paper reproducibility classification dataset. 
+We evaluated the classifiers *SciBERT-v1* and *SciBERT-v2* on the paper reproducibility classification dataset. 
 As the total number of samples in this dataset is relatively small (i.e., 886 samples), we perform 5-fold cross validation 
-and report the mean of the performance metric to give a better estimate of the model's performance.The results can be 
-found in Table \ref{tab:lm_model_results}. Results show that the \emph{SciBERT-v2} model performs significantly better 
-than the \emph{SciBERT-v1} model even though its using only the important claim as input to the model.
+and report the mean of the performance metric to give a better estimate of the model's performance. The results can be 
+found in below table,
 
-|    Model   | Accuracy | Precision | Recall | F1-score |
-|:----------:|:--------:|:---------:|:------:|:--------:|
-| SciBERT-v1 |   66.59  |   0.644   |  0.611 |   0.612  |
-| SciBERT-v2 |   90.85  |   0.869   |  0.934 |   0.900  |
+![_config.yml]({{ site.baseurl }}/images/results_tc_claim_level.png)
+
+![_config.yml]({{ site.baseurl }}/images/results_tc_paper_level.png)
+
+Results show that the *SciBERT-v2* model performs significantly better 
+than the *SciBERT-v1* model even though its using only the important claim as input to the model.
 
 Then, we evaluate the extracted trigger phrases corresponding to each of the label categories (i.e., reproducible vs 
 non-reproducible) by manually examining them. We gave the list of extracted phrases corresponding to reproducible and 
 non-reproducible papers to the domain experts and asked them to evaluate if those phrases make sense intuitively. Some 
-of the extracted trigger phrases are shown in the Table \ref{tab:lm_phrases}.
+of the extracted trigger phrases are shown in the below table,
+
+![_config.yml]({{ site.baseurl }}/images/examples_tc_claim_level.png)
+
+![_config.yml]({{ site.baseurl }}/images/examples_tc_paper_level.png)
 
 We observed some interesting patterns in the trigger phrases extracted by our framework. The model is able to identify 
 the phrases which contain terms like statistical tests having high significance, p-values less than a specific range 
@@ -123,9 +137,12 @@ having a difference in test results, incompatibility in experiments and p-values
 
 To measure if the p-values play a important role in deciding the reproducibility of the papers, we further analysed the 
 distribution of p-values that are extracted from only the most important phrase identified by our framework for each paper 
-and found a clear separation in p-values between the reproducible vs non-reproducible papers as shown in the Figure 
-\ref{fig:pv_dist}. This observation indicates our phrase extraction framework could also provide additional capability 
-to explain the deep learning models prediction.
+and found a clear separation in p-values between the reproducible vs non-reproducible papers as shown in the below figure,
+
+![_config.yml]({{ site.baseurl }}/images/pv_dist.png)
+
+This observation indicates our phrase extraction framework could also provide additional capability 
+to explain the deep learning models prediction. 
 
 # References
 
